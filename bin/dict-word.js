@@ -25,8 +25,7 @@ program
   .option('--word <type>', 'Enter your word')
   .action((opt) => word.ex(opt));
 
-program
-  .command('wod')
-  .description('word of the day')
-  .action(() => word.wod);
+program.command('wod').description('word of the day').action(word.wod);
+
+program.command('play').description('Play the word game').action(word.play);
 program.parse(process.argv);
