@@ -87,101 +87,138 @@ const word = {
         readlineInterface.question(questionText, resolve);
       });
     };
+    let score = 0;
+    while (true) {
+      console.log('Letss play\n'.blue);
 
-    console.log('Letss play\n'.blue);
+      keyManager = new KeyManager();
+      const key = keyManager.getKey();
+      const api = new WordManager(key);
+      const outputData = await api.getRandomWord();
 
-    keyManager = new KeyManager();
-    const key = keyManager.getKey();
-    const api = new WordManager(key);
-    const outputData = await api.getRandomWord();
+      let checkToPlay = false;
+      let permutations = findPermutations(outputData['word']);
+      let definitionIndex = 0;
+      console.log(outputData['definition'][definitionIndex++].yellow);
+      let inputWord = await input('Can you guess this word?\n'.blue);
+      if (inputWord === outputData['word']) {
+        score += 10;
+        console.log('You win the game 🎉'.green);
+        console.log(`Your score: ${score}`.green);
+      } else {
+        let flag = false;
+        while (true) {
+          if (flag === true) break;
+          else {
+            console.log('Enter option\n1. Try again\n2. Hints\n3. Quit'.blue);
+            let option = await input('');
+            let wordInput;
+            option = Number(option);
+            if (option === 1) {
+              wordInput = await input('Enter your word again\n'.blue);
+              if (wordInput === outputData['word']) {
+                score += 10;
+                console.log('You win the game 🎉'.green);
+                console.log(`Your score: ${score}`.green);
+                flag = true;
+              } else {
+                score -= 2;
+                console.log('Wrong guess :('.red);
+              }
+            } else if (option === 2) {
+              score -= 3;
+              console.log('Hints:\n'.blue);
+              let synonymIndex = 0;
+              let antonymIndex = 0;
+              let hints =
+                outputData['antonym'] === undefined ||
+                outputData['antonym'][antonymIndex] === undefined
+                  ? Math.floor(Math.random() * 3 + 1)
+                  : Math.floor(Math.random() * 4 + 1);
 
-    let permutations = findPermutations(outputData['word']);
-    let definitionIndex = 0;
-    console.log(outputData['definition'][definitionIndex++].yellow);
-    let inputWord = await input('Can you guess this word?\n'.blue);
-    if (inputWord === outputData['word']) {
-      console.log('You win the game 🎉'.green);
-    } else {
-      let flag = false;
-      while (true) {
-        if (flag === true) break;
-        else {
-          console.log('Enter option\n1. Try again\n2. Hints\n3. Quit'.blue);
-          let option = await input('');
-          let wordInput;
-          option = Number(option);
-          if (option === 1) {
-            wordInput = await input('Enter your word again\n'.blue);
-            if (wordInput === outputData['word']) {
-              console.log('You win the game 🎉'.green);
+              switch (hints) {
+                case 1:
+                  console.log(
+                    'Letters are jumbled, Can you guess the right word\n'.blue
+                  );
+                  const temp = Math.floor(
+                    Math.random() * permutations.length + 1
+                  );
+                  console.log(permutations[temp].yellow);
+
+                  wordInput = await input('Enter your word\n'.blue);
+                  if (wordInput === outputData['word']) {
+                    score += 10;
+                    console.log('You win the game 🎉'.green);
+                    console.log(`Your score: ${score}`.green);
+                    flag = true;
+                  } else {
+                    score -= 2;
+                    console.log('Wrong guess :('.red);
+                  }
+                  break;
+                case 2:
+                  console.log(
+                    'This is another definition, can you guess now\n'.blue
+                  );
+                  console.log(
+                    outputData['definition'][definitionIndex++].yellow
+                  );
+
+                  wordInput = await input('Enter your word\n'.blue);
+                  if (wordInput === outputData['word']) {
+                    score += 10;
+                    console.log('You win the game 🎉'.green);
+                    console.log(`Your score: ${score}`.green);
+                    flag = true;
+                  } else {
+                    score -= 2;
+                    console.log('Wrong guess :('.red);
+                  }
+                  break;
+                case 3:
+                  console.log('Synonym of the word: '.yellow);
+                  console.log(outputData['synonym'][synonymIndex++].yellow);
+
+                  wordInput = await input('Enter your word\n'.blue);
+                  if (wordInput === outputData['word']) {
+                    score += 10;
+                    console.log('You win the game 🎉'.green);
+                    console.log(`Your score: ${score}`.green);
+                    flag = true;
+                  } else {
+                    score -= 2;
+                    console.log('Wrong guess :('.red);
+                  }
+                  break;
+                case 4:
+                  console.log('Antonym of the word: '.yellow);
+                  console.log(outputData['antonym'][antonymIndex++].yellow);
+
+                  wordInput = await input('Enter your word\n'.blue);
+                  if (wordInput === outputData['word']) {
+                    score += 10;
+                    console.log('You win the game 🎉'.green);
+                    console.log(`Your score: ${score}`.green);
+                    flag = true;
+                  } else {
+                    score -= 2;
+                    console.log('Wrong guess :('.red);
+                  }
+                  break;
+              }
+            } else if (option === 3) {
+              checkToPlay = true;
               flag = true;
-            } else console.log('Wrong guess :('.red);
-          } else if (option === 2) {
-            console.log('Hints:\n'.blue);
-            let synonymIndex = 0;
-            let antonymIndex = 0;
-            let hints =
-              outputData['antonym'] === undefined ||
-              outputData['antonym'][antonymIndex] === undefined
-                ? Math.floor(Math.random() * 3 + 1)
-                : Math.floor(Math.random() * 4 + 1);
-
-            switch (hints) {
-              case 1:
-                console.log(
-                  'Letters are jumbled, Can you guess the right word\n'.blue
-                );
-                const temp = Math.floor(
-                  Math.random() * permutations.length + 1
-                );
-                console.log(permutations[temp].yellow);
-
-                wordInput = await input('Enter your word\n'.blue);
-                if (wordInput === outputData['word']) {
-                  console.log('You win the game 🎉'.green);
-                  flag = true;
-                } else console.log('Wrong guess :('.red);
-                break;
-              case 2:
-                console.log(
-                  'This is another definition, can you guess now\n'.blue
-                );
-                console.log(outputData['definition'][definitionIndex++].yellow);
-
-                wordInput = await input('Enter your word\n'.blue);
-                if (wordInput === outputData['word']) {
-                  console.log('You win the game 🎉'.green);
-                  flag = true;
-                } else console.log('Wrong guess :('.red);
-                break;
-              case 3:
-                console.log('Synonym of the word: '.yellow);
-                console.log(outputData['synonym'][synonymIndex++].yellow);
-
-                wordInput = await input('Enter your word\n'.blue);
-                if (wordInput === outputData['word']) {
-                  console.log('You win the game 🎉'.green);
-                  flag = true;
-                } else console.log('Wrong guess :('.red);
-                break;
-              case 4:
-                console.log('Antonym of the word: '.yellow);
-                console.log(outputData['antonym'][antonymIndex++].yellow);
-
-                wordInput = await input('Enter your word\n'.blue);
-                if (wordInput === outputData['word']) {
-                  console.log('You win the game 🎉'.green);
-                  flag = true;
-                } else console.log('Wrong guess :('.red);
-                break;
+              console.log('Game ended'.blue);
+              console.log(`Your score: ${score}`.green);
             }
-          } else if (option === 3) {
-            flag = true;
-            console.log('Game ended'.blue);
           }
         }
       }
-      process.exit();
+      if (checkToPlay === true) {
+        process.exit();
+      }
     }
   },
 };
