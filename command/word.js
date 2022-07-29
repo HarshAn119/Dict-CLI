@@ -3,6 +3,7 @@ const WordManager = require('../lib/WordManager');
 const colors = require('colors');
 const { format } = require('../utils/format');
 const readline = require('readline');
+const checkWord = require('../utils/checkWord');
 
 const findPermutations = (string) => {
   if (string.length < 2) {
@@ -106,25 +107,20 @@ const word = {
         console.log('You win the game 🎉'.green);
         console.log(`Your score: ${score}`.green);
       } else {
-        let flag = false;
+        let continue_game = false;
         while (true) {
-          if (flag === true) break;
+          if (continue_game === true) break;
           else {
             console.log('Enter option\n1. Try again\n2. Hints\n3. Quit'.blue);
             let option = await input('');
             let wordInput;
+            let tempScore;
             option = Number(option);
             if (option === 1) {
               wordInput = await input('Enter your word again\n'.blue);
-              if (wordInput === outputData['word']) {
-                score += 10;
-                console.log('You win the game 🎉'.green);
-                console.log(`Your score: ${score}`.green);
-                flag = true;
-              } else {
-                score -= 2;
-                console.log('Wrong guess :('.red);
-              }
+              tempScore = checkWord(wordInput, outputData['word'], score);
+              if (tempScore === 10) continue_game = true;
+              score += tempScore;
             } else if (option === 2) {
               score -= 3;
               console.log('Hints:\n'.blue);
@@ -147,15 +143,9 @@ const word = {
                   console.log(permutations[temp].yellow);
 
                   wordInput = await input('Enter your word\n'.blue);
-                  if (wordInput === outputData['word']) {
-                    score += 10;
-                    console.log('You win the game 🎉'.green);
-                    console.log(`Your score: ${score}`.green);
-                    flag = true;
-                  } else {
-                    score -= 2;
-                    console.log('Wrong guess :('.red);
-                  }
+                  tempScore = checkWord(wordInput, outputData['word'], score);
+                  if (tempScore === 10) continue_game = true;
+                  score += tempScore;
                   break;
                 case 2:
                   console.log(
@@ -166,50 +156,32 @@ const word = {
                   );
 
                   wordInput = await input('Enter your word\n'.blue);
-                  if (wordInput === outputData['word']) {
-                    score += 10;
-                    console.log('You win the game 🎉'.green);
-                    console.log(`Your score: ${score}`.green);
-                    flag = true;
-                  } else {
-                    score -= 2;
-                    console.log('Wrong guess :('.red);
-                  }
+                  tempScore = checkWord(wordInput, outputData['word'], score);
+                  if (tempScore === 10) continue_game = true;
+                  score += tempScore;
                   break;
                 case 3:
                   console.log('Synonym of the word: '.yellow);
                   console.log(outputData['synonym'][synonymIndex++].yellow);
 
                   wordInput = await input('Enter your word\n'.blue);
-                  if (wordInput === outputData['word']) {
-                    score += 10;
-                    console.log('You win the game 🎉'.green);
-                    console.log(`Your score: ${score}`.green);
-                    flag = true;
-                  } else {
-                    score -= 2;
-                    console.log('Wrong guess :('.red);
-                  }
+                  tempScore = checkWord(wordInput, outputData['word'], score);
+                  if (tempScore === 10) continue_game = true;
+                  score += tempScore;
                   break;
                 case 4:
                   console.log('Antonym of the word: '.yellow);
                   console.log(outputData['antonym'][antonymIndex++].yellow);
 
                   wordInput = await input('Enter your word\n'.blue);
-                  if (wordInput === outputData['word']) {
-                    score += 10;
-                    console.log('You win the game 🎉'.green);
-                    console.log(`Your score: ${score}`.green);
-                    flag = true;
-                  } else {
-                    score -= 2;
-                    console.log('Wrong guess :('.red);
-                  }
+                  tempScore = checkWord(wordInput, outputData['word'], score);
+                  if (tempScore === 10) continue_game = true;
+                  score += tempScore;
                   break;
               }
             } else if (option === 3) {
               checkToPlay = true;
-              flag = true;
+              continue_game = true;
               console.log('Game ended'.blue);
               console.log(`Your score: ${score}`.green);
             }
