@@ -1,9 +1,7 @@
 const KeyManager = require('../lib/KeyManager');
 const WordManager = require('../lib/WordManager');
 const colors = require('colors');
-const { format } = require('../utils/format');
 const readline = require('readline');
-const checkWord = require('../utils/checkWord');
 
 const findPermutations = (string) => {
   if (string.length < 2) {
@@ -21,6 +19,59 @@ const findPermutations = (string) => {
   return permutationsArray;
 };
 
+const readlineInterface = readline.createInterface(
+  process.stdin,
+  process.stdout
+);
+
+const input = (questionText) => {
+  return new Promise((resolve, reject) => {
+    readlineInterface.question(questionText, resolve);
+  });
+};
+const showOptions = async () => {
+  console.log('Enter option\n1. To Try again\n2. Show Hint\n3. Quit'.blue);
+  let option = await input('');
+  return Number(option);
+};
+
+const askToGuess = async () => {
+  let wordInput = await input('Enter your word\n'.blue);
+  return wordInput;
+};
+
+const checkGuess = (word1, word2) => {
+  return word1 === word2;
+};
+
+let definitionIndex = 0;
+let synonymIndex = 0;
+let antonymIndex = 0;
+const showRandomHints = (wordDetails) => {
+  let hint;
+  if (wordDetails['antonym'] != undefined) {
+    hint = Math.floor(Math.random() * 4);
+  } else hint = Math.floor(Math.random() * 3);
+
+  if (hint === 0) {
+    if (definitionIndex <= wordDetails['definition'].length) {
+      console.log('definition: ', wordDetails['definition'][definitionIndex++]);
+    }
+  } else if (hint === 1) {
+    if (synonymIndex <= wordDetails['synonym'].length) {
+      console.log('synonym: ', wordDetails['synonym'][synonymIndex++]);
+    }
+  } else if (hint === 2) {
+    let permutations = findPermutations(wordDetails['word']);
+    const temp = Math.floor(Math.random() * permutations.length + 1);
+    console.log('jumbled: ', permutations[temp]);
+  } else if (hint === 3) {
+    if (antonymIndex <= wordDetails['antonym'].length) {
+      console.log('antonym: ', wordDetails['antonym'][antonymIndex++]);
+    }
+  }
+};
+
 const word = {
   async def(opt) {
     try {
@@ -29,6 +80,7 @@ const word = {
       const api = new WordManager(key);
       const outputData = await api.getWordDefinition(opt.word);
       console.log(outputData);
+      process.exit();
     } catch (err) {
       console.error(err.message.red);
     }
@@ -40,6 +92,7 @@ const word = {
       const api = new WordManager(key);
       const outputData = await api.getWordSynonym(opt.word);
       console.log(outputData);
+      process.exit();
     } catch (err) {
       console.error(err.message.red);
     }
@@ -51,6 +104,7 @@ const word = {
       const api = new WordManager(key);
       const outputData = await api.getWordAntonym(opt.word);
       console.log(outputData);
+      process.exit();
     } catch (err) {
       console.error(err.message.red);
     }
@@ -62,6 +116,7 @@ const word = {
       const api = new WordManager(key);
       const outputData = await api.getWordExample(opt.word);
       console.log(outputData);
+      process.exit();
     } catch (err) {
       console.error(err.message.red);
     }
@@ -73,125 +128,43 @@ const word = {
       const api = new WordManager(key);
       const outputData = await api.getRandomWord();
       console.log(outputData);
+      process.exit();
     } catch (err) {
       console.error(err.message.red);
     }
   },
   async play() {
-    const readlineInterface = readline.createInterface(
-      process.stdin,
-      process.stdout
-    );
-
-    const input = (questionText) => {
-      return new Promise((resolve, reject) => {
-        readlineInterface.question(questionText, resolve);
-      });
-    };
     let score = 0;
-    while (true) {
-      console.log('Letss play\n'.blue);
+    keyManager = new KeyManager();
+    const key = keyManager.getKey();
+    const api = new WordManager(key);
 
-      keyManager = new KeyManager();
-      const key = keyManager.getKey();
-      const api = new WordManager(key);
-      const outputData = await api.getRandomWord();
+    let continue_game = true;
+    while (continue_game) {
+      console.log('Lets Start\n'.blue);
+      const wordDetails = await api.getRandomWord();
 
-      let checkToPlay = false;
-      let permutations = findPermutations(outputData['word']);
-      let definitionIndex = 0;
-      console.log(outputData['definition'][definitionIndex++].yellow);
-      let inputWord = await input('Can you guess this word?\n'.blue);
-      if (inputWord === outputData['word']) {
-        score += 10;
-        console.log('You win the game 🎉'.green);
-        console.log(`Your score: ${score}`.green);
-      } else {
-        let continue_game = false;
-        while (true) {
-          if (continue_game === true) break;
-          else {
-            console.log('Enter option\n1. Try again\n2. Hints\n3. Quit'.blue);
-            let option = await input('');
-            let wordInput;
-            let tempScore;
-            option = Number(option);
-            if (option === 1) {
-              wordInput = await input('Enter your word again\n'.blue);
-              tempScore = checkWord(wordInput, outputData['word'], score);
-              if (tempScore === 10) continue_game = true;
-              score += tempScore;
-            } else if (option === 2) {
-              score -= 3;
-              console.log('Hints:\n'.blue);
-              let synonymIndex = 0;
-              let antonymIndex = 0;
-              let hints =
-                outputData['antonym'] === undefined ||
-                outputData['antonym'][antonymIndex] === undefined
-                  ? Math.floor(Math.random() * 3 + 1)
-                  : Math.floor(Math.random() * 4 + 1);
+      showRandomHints(wordDetails);
+      while (true) {
+        const guess = await askToGuess();
+        let correct = checkGuess(guess, wordDetails['word']);
 
-              switch (hints) {
-                case 1:
-                  console.log(
-                    'Letters are jumbled, Can you guess the right word\n'.blue
-                  );
-                  const temp = Math.floor(
-                    Math.random() * permutations.length + 1
-                  );
-                  console.log(permutations[temp].yellow);
-
-                  wordInput = await input('Enter your word\n'.blue);
-                  tempScore = checkWord(wordInput, outputData['word'], score);
-                  if (tempScore === 10) continue_game = true;
-                  score += tempScore;
-                  break;
-                case 2:
-                  console.log(
-                    'This is another definition, can you guess now\n'.blue
-                  );
-                  console.log(
-                    outputData['definition'][definitionIndex++].yellow
-                  );
-
-                  wordInput = await input('Enter your word\n'.blue);
-                  tempScore = checkWord(wordInput, outputData['word'], score);
-                  if (tempScore === 10) continue_game = true;
-                  score += tempScore;
-                  break;
-                case 3:
-                  console.log('Synonym of the word: '.yellow);
-                  console.log(outputData['synonym'][synonymIndex++].yellow);
-
-                  wordInput = await input('Enter your word\n'.blue);
-                  tempScore = checkWord(wordInput, outputData['word'], score);
-                  if (tempScore === 10) continue_game = true;
-                  score += tempScore;
-                  break;
-                case 4:
-                  console.log('Antonym of the word: '.yellow);
-                  console.log(outputData['antonym'][antonymIndex++].yellow);
-
-                  wordInput = await input('Enter your word\n'.blue);
-                  tempScore = checkWord(wordInput, outputData['word'], score);
-                  if (tempScore === 10) continue_game = true;
-                  score += tempScore;
-                  break;
-              }
-            } else if (option === 3) {
-              checkToPlay = true;
-              continue_game = true;
-              console.log('Game ended'.blue);
-              console.log(`Your score: ${score}`.green);
-            }
+        if (!correct) {
+          let option = await showOptions();
+          if (option === 2) {
+            showRandomHints(wordDetails);
+          } else if (option === 3) {
+            continue_game = false;
+            break;
           }
+        } else {
+          score += 10;
+          console.log(`Correct answer, ${score}`);
+          break;
         }
       }
-      if (checkToPlay === true) {
-        process.exit();
-      }
     }
+    if (!continue_game) process.exit();
   },
 };
 
